@@ -1,12 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hustle Finder 💸</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hustle Finder 💸</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); font-family: sans-serif; color: #fff; padding: 40px 20px; }
+    .wrap { max-width: 600px; margin: 0 auto; }
+    .chip { border: 2px solid rgba(255,255,255,0.2); border-radius: 999px; padding: 8px 16px; cursor: pointer; background: transparent; color: #fff; margin: 4px; }
+    .chip.on { background: #7c3aed; border-color: #7c3aed; }
+    .opt { display: block; width: 100%; padding: 14px; margin-bottom: 10px; border: 2px solid rgba(255,255,255,0.15); border-radius: 12px; background: transparent; color: #fff; cursor: pointer; text-align: left; font-size: 16px; }
+    .opt.on { border-color: #a78bfa; background: rgba(167,139,250,0.2); }
+    .btn { width: 100%; padding: 16px; background: #7c3aed; border: none; border-radius: 12px; color: #fff; font-size: 18px; font-weight: 800; cursor: pointer; margin-top: 10px; }
+    .btn:disabled { opacity: 0.4; }
+    .back { background: rgba(255,255,255,0.1); }
+    .box { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 24px; white-space: pre-wrap; line-height: 1.8; color: #e2e8f0; max-height: 60vh; overflow-y: auto; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const skills = ["Drawing / Art","Photography","Video Editing","Coding","Writing","Music","Sports / Fitness","Cooking","Gaming","Social Media","Math / Tutoring","Languages","Fashion / Style","Fixing Things"];
+const times = ["1–2 hrs/day","3–5 hrs/day","Weekends only"];
+const budgets = ["$0 (no budget)","$10–$50","$50–$200"];
+
+function App() {
+  const [step, setStep] = React.useState(0);
+  const [sel, setSel] = React.useState([]);
+  const [time, setTime] = React.useState("");
+  const [budget, setBudget] = React.useState("");
+  const [ideas, setIdeas] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+
+  const toggle = s => setSel(p => p.includes(s) ? p.filter(x=>x!==s) : [...p,s]);
+
+  const generate = async () => {
+    setLoading(true);
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1000,
+        messages:[{role:"user", content:`You are a teen money coach for a 17-year-old. Give 4 specific side hustle ideas to START THIS WEEK. Skills: ${sel.join(", ")}. Time: ${time}. Budget: ${budget}. For each: name, 3 steps to start, weekly earnings, pro tip. Use emojis!`}]})
+    });
+    const data = await res.json();
+    setIdeas(data.content?.map(b=>b.text||"").join("\n")||"Error, try again!");
+    setStep(3); setLoading(false);
+  };
+
+  return (
+    <div className="wrap">
+      <div style={{textAlign:"center",marginBottom:32}}>
+        <div style={{fontSize:48}}>💸</div>
+        <h1 style={{fontSize:32,fontWeight:800}}>Hustle Finder</h1>
+        <p style={{color:"#a78bfa"}}>AI-powered side hustle ideas for you</p>
+      </div>
+
+      {step===0 && <div>
+        <h2 style={{marginBottom:16}}>What are you good at? 🎯</h2>
+        <div style={{marginBottom:20}}>{skills.map(s=><button key={s} className={`chip ${sel.includes(s)?"on":""}`} onClick={()=>toggle(s)}>{s}</button>)}</div>
+        <button className="btn" disabled={!sel.length} onClick={()=>setStep(1)}>Next →</button>
+      </div>}
+
+      {step===1 && <div>
+        <h2 style={{marginBottom:16}}>How much time? ⏰</h2>
+        {times.map(t=><button key={t} className={`opt ${time===t?"on":""}`} onClick={()=>setTime(t)}>{t}</button>)}
+        <div style={{display:"flex",gap:12}}>
+          <button className="btn back" onClick={()=>setStep(0)} style={{width:"40%"}}>← Back</button>
+          <button className="btn" disabled={!time} onClick={()=>setStep(2)} style={{width:"60%"}}>Next →</button>
+        </div>
+      </div>}
+
+      {step===2 && <div>
+        <h2 style={{marginBottom:16}}>Startup budget? 💰</h2>
+        {budgets.map(b=><button key={b} className={`opt ${budget===b?"on":""}`} onClick={()=>setBudget(b)}>{b}</button>)}
+        <div style={{display:"flex",gap:12}}>
+          <button className="btn back" onClick={()=>setStep(1)} style={{width:"40%"}}>← Back</button>
+          <button className="btn" disabled={!budget} onClick={generate} style={{width:"60%"}}>Generate ✨</button>
+        </div>
+      </div>}
+
+      {loading && <p style={{textAlign:"center",color:"#a78bfa",fontSize:18}}>Finding your hustles... ✨</p>}
+
+      {step===3 && !loading && <div>
+        <h2 style={{marginBottom:16}}>Your Ideas 🔥</h2>
+        <div className="box">{ideas}</div>
+        <button className="btn back" onClick={()=>{setStep(0);setSel([]);setTime("");setBudget("");setIdeas("");}}>Start Over 🔄</button>
+      </div>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
 </html>
