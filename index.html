@@ -24,7 +24,6 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const KEY = "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";
 const skills = ["Drawing / Art","Photography","Video Editing","Coding","Writing","Music","Sports / Fitness","Cooking","Gaming","Social Media","Math / Tutoring","Languages","Fashion / Style","Fixing Things"];
 const times = ["1-2 hrs/day","3-5 hrs/day","Weekends only"];
 const budgets = ["$0 (no budget)","$10-$50","$50-$200"];
@@ -43,7 +42,11 @@ function App() {
       const res = await fetch("/api/chat", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:"You are a teen money coach for a 17-year-old. Give 4 specific side hustle ideas. Skills: "+sel.join(", ")+". Time: "+time+". Budget: "+budget+". For each: name, 3 steps, weekly earnings, pro tip. Use emojis!"}]})
+        body: JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:1000,
+          messages:[{role:"user",content:"You are a teen money coach for a 17-year-old. Give 4 specific side hustle ideas. Skills: "+sel.join(", ")+". Time: "+time+". Budget: "+budget+". For each: name, 3 steps, weekly earnings, pro tip. Use emojis!"}]
+        })
       });
       const data = await res.json();
       setIdeas(data.content?.map(b=>b.text||"").join("\n")||"Try again!");
