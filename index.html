@@ -24,9 +24,10 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
+const KEY = "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";
 const skills = ["Drawing / Art","Photography","Video Editing","Coding","Writing","Music","Sports / Fitness","Cooking","Gaming","Social Media","Math / Tutoring","Languages","Fashion / Style","Fixing Things"];
-const times = ["1–2 hrs/day","3–5 hrs/day","Weekends only"];
-const budgets = ["$0 (no budget)","$10–$50","$50–$200"];
+const times = ["1-2 hrs/day","3-5 hrs/day","Weekends only"];
+const budgets = ["$0 (no budget)","$10-$50","$50-$200"];
 
 function App() {
   const [step, setStep] = React.useState(0);
@@ -35,21 +36,20 @@ function App() {
   const [budget, setBudget] = React.useState("");
   const [ideas, setIdeas] = React.useState("");
   const [loading, setLoading] = React.useState(false);
-
   const toggle = s => setSel(p => p.includes(s) ? p.filter(x=>x!==s) : [...p,s]);
-
   const generate = async () => {
     setLoading(true);
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1000,
-        messages:[{role:"user", content:`You are a teen money coach for a 17-year-old. Give 4 specific side hustle ideas to START THIS WEEK. Skills: ${sel.join(", ")}. Time: ${time}. Budget: ${budget}. For each: name, 3 steps to start, weekly earnings, pro tip. Use emojis!`}]})
-    });
-    const data = await res.json();
-    setIdeas(data.content?.map(b=>b.text||"").join("\n")||"Error, try again!");
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{"Content-Type":"application/json","x-api-key":KEY,"anthropic-version":"2023-06-01"},
+        body: JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:"You are a teen money coach for a 17-year-old. Give 4 specific side hustle ideas. Skills: "+sel.join(", ")+". Time: "+time+". Budget: "+budget+". For each: name, 3 steps, weekly earnings, pro tip. Use emojis!"}]})
+      });
+      const data = await res.json();
+      setIdeas(data.content?.map(b=>b.text||"").join("\n")||"Try again!");
+    } catch(e) { setIdeas("Error. Try again!"); }
     setStep(3); setLoading(false);
   };
-
   return (
     <div className="wrap">
       <div style={{textAlign:"center",marginBottom:32}}>
@@ -57,33 +57,28 @@ function App() {
         <h1 style={{fontSize:32,fontWeight:800}}>Hustle Finder</h1>
         <p style={{color:"#a78bfa"}}>AI-powered side hustle ideas for you</p>
       </div>
-
       {step===0 && <div>
         <h2 style={{marginBottom:16}}>What are you good at? 🎯</h2>
-        <div style={{marginBottom:20}}>{skills.map(s=><button key={s} className={`chip ${sel.includes(s)?"on":""}`} onClick={()=>toggle(s)}>{s}</button>)}</div>
+        <div style={{marginBottom:20}}>{skills.map(s=><button key={s} className={"chip "+(sel.includes(s)?"on":"")} onClick={()=>toggle(s)}>{s}</button>)}</div>
         <button className="btn" disabled={!sel.length} onClick={()=>setStep(1)}>Next →</button>
       </div>}
-
       {step===1 && <div>
         <h2 style={{marginBottom:16}}>How much time? ⏰</h2>
-        {times.map(t=><button key={t} className={`opt ${time===t?"on":""}`} onClick={()=>setTime(t)}>{t}</button>)}
+        {times.map(t=><button key={t} className={"opt "+(time===t?"on":"")} onClick={()=>setTime(t)}>{t}</button>)}
         <div style={{display:"flex",gap:12}}>
-          <button className="btn back" onClick={()=>setStep(0)} style={{width:"40%"}}>← Back</button>
+          <button className="btn back" onClick={()=>setStep(0)} style={{width:"40%"}}>Back</button>
           <button className="btn" disabled={!time} onClick={()=>setStep(2)} style={{width:"60%"}}>Next →</button>
         </div>
       </div>}
-
       {step===2 && <div>
         <h2 style={{marginBottom:16}}>Startup budget? 💰</h2>
-        {budgets.map(b=><button key={b} className={`opt ${budget===b?"on":""}`} onClick={()=>setBudget(b)}>{b}</button>)}
+        {budgets.map(b=><button key={b} className={"opt "+(budget===b?"on":"")} onClick={()=>setBudget(b)}>{b}</button>)}
         <div style={{display:"flex",gap:12}}>
-          <button className="btn back" onClick={()=>setStep(1)} style={{width:"40%"}}>← Back</button>
+          <button className="btn back" onClick={()=>setStep(1)} style={{width:"40%"}}>Back</button>
           <button className="btn" disabled={!budget} onClick={generate} style={{width:"60%"}}>Generate ✨</button>
         </div>
       </div>}
-
       {loading && <p style={{textAlign:"center",color:"#a78bfa",fontSize:18}}>Finding your hustles... ✨</p>}
-
       {step===3 && !loading && <div>
         <h2 style={{marginBottom:16}}>Your Ideas 🔥</h2>
         <div className="box">{ideas}</div>
@@ -92,7 +87,6 @@ function App() {
     </div>
   );
 }
-
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
